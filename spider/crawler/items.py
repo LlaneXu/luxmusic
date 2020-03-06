@@ -16,3 +16,4 @@ class SongItem(scrapy.Item):
     publishTime = scrapy.Field()
     file_urls = scrapy.Field()        # 歌曲下载地址
     files = scrapy.Field()       # 本地地址
+    ext = scrapy.Field()

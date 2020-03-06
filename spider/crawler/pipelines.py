@@ -10,6 +10,7 @@ import datetime
 from scrapy.pipelines.files import FilesPipeline
 from meta.models import Artist, Album, Song
 from django.utils import timezone
+from core.media import get_path_from_meta
 
 class SongPipeline(FilesPipeline):
     def process_item(self, item, spider):
@@ -51,9 +52,10 @@ class SongPipeline(FilesPipeline):
         return super().process_item(item, spider)
 
     def file_path(self, request, response=None, info=None):
-        artists = "&".join([artist["name"] for artist in self.item["artists"]])
-        filename = "%s - %s.m4a" % (artists, self.item["name"])
-        return "%s/%s" % (self.item["artists"][0]["name"], filename)
+        return get_path_from_meta(self.item)
+        # artists = "&".join([artist["name"] for artist in self.item["artists"]])
+        # filename = "%s - %s.m4a" % (artists, self.item["name"])
+        # return "%s/%s" % (artists, filename)
 
     def item_completed(self, results, item, info):
         """

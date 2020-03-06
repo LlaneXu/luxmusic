@@ -128,9 +128,9 @@ class Netease_Spider(scrapy.Spider):
             print("no download url")
             return
         item["file_urls"] = [url]
-        path = "%s - %s" % (item["artists"][0]["name"], item["name"])
-        print(path)
-        item["files"] = ["%s - %s" % (item["artists"][0]["name"], item["name"])]
+        item["ext"] = "m4a"
+        # path = get_path_from_meta(item)
+        # item["files"] = [path]
         return item
 
 

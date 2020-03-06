@@ -17,6 +17,8 @@ sys.path.append(os.path.dirname(os.getcwd()))
 os.environ['DJANGO_SETTINGS_MODULE'] = 'luxmusic.settings'
 django.setup()
 
+from django.conf import settings
+
 
 BOT_NAME = 'crawler'
 
@@ -76,7 +78,7 @@ ROBOTSTXT_OBEY = True
 ITEM_PIPELINES = {
    'crawler.pipelines.SongPipeline': 300,
 }
-FILES_STORE = '../music'
+FILES_STORE = settings.MUSIC_FOLDER
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
