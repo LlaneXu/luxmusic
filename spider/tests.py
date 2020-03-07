@@ -15,7 +15,7 @@ class SpiderTest(TestCase):
 
     def test_song(self):
         # cmdline.execute("scrapy list".split())
-        cmdline.execute("scrapy crawl netease -a category=song -a id=298317".split())
+        cmdline.execute("scrapy crawl netease -a category=song -a id=64317".split())
         self.assertTrue(True)
 
 # cmdline.execute("scrapy crawl netease -a category=song -a id=29005677".split())

@@ -60,6 +60,11 @@ class Song(Model):
         ('ape', 'ape'),
         ('flac', 'flac'),
     ), default='m4a')
+    source = models.CharField(max_length=16, choices=(
+        ('netease', '网易云音乐'),
+        ('qq', 'qq音乐'),
+        ('kugou', '酷狗音乐'),
+    ), null=True, blank=True)
 
 
     # def __str__(self):

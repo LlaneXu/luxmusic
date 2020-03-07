@@ -1,5 +1,8 @@
 from core.response import Response, ResponseException
 from .models import Song, Artist
+from core.media import get_path_from_meta
+from core.netease import get_url_by_song_id
+from core.redis_queue import push_download
 
 # Create your views here.
 
@@ -18,7 +21,9 @@ class SongView(Response):
         netease_id = request.GET.get('neteaseId')
         artists = request.GET.getlist('artists')
         name = request.GET.get('name')
+        album = request.GET.get('album')
 
+        ret = {}
         # use id to query first
         try:
             if id:
@@ -29,9 +34,26 @@ class SongView(Response):
                 songs = Song.objects.all()
                 for artist in artists:
                     songs = songs.filter(artists__name__exact=artist)
+                if album:
+                    songs = songs.filter(album__name=album)
                 song = songs[0]
             else:
                 raise ResponseException("not enough params")
+
+            ret = song.to_dict()
+
         except Song.DoesNotExist:
             pass
-        return song.to_dict()
+
+        # can find the song record and downloaded, return local file
+        if ret.get("downloaded"):
+            ret["url"] = get_path_from_meta(ret)
+        else:
+            if netease_id:
+                data = {
+                    "source": "netease",
+                    "id": netease_id,
+                }
+                push_download(data)
+                ret["url"] = get_url_by_song_id(netease_id)
+        return ret

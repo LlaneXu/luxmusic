@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-@Time    : 2020-02-27 23:23
+@Time    : 2020-03-06 15:16
 @Author  : Lei Xu
 @Email   : Llane_xu@outlook.com
 @File    : netease.py
@@ -22,8 +22,12 @@ Todo:
 # module level variables here
 
 # Create your models here.
+
+
 import os
 import json
+import logging
+import requests
 import binascii
 import Crypto.Cipher.AES as AES
 import Crypto.PublicKey.RSA as RSA
@@ -95,12 +99,12 @@ def _rsa_encrypt(text):
         reverse_byte = reverse_text.encode('ascii')
         sec_key = int(reverse_byte.hex(), 16) ** int(e, 16) % int(n, 16)
         sec_key = format(sec_key, 'x')
-        print(sec_key.zfill(256))
+        logging.info("sec_key:\n%s" % sec_key.zfill(256))
 
         pub_key = RSA.construct((int(n, 16), int(e, 16)))
         encryptor = PKCS1_OAEP.new(pub_key)
         encrypt_text = encryptor.encrypt(binascii.hexlify(reverse_text.encode('ascii')))
-        print(encrypt_text.hex())
+        logging.info("encrypt_text:\n%s" % encrypt_text.hex())
 
         SEC_KEY = sec_key.zfill(256)
     return SEC_KEY
@@ -108,7 +112,7 @@ def _rsa_encrypt(text):
 
 def encrypt_request(data):
     text = json.dumps(data)
-    print(text)
+    logging.info("raw:\n%s" % text)
     first_aes_key = b'0CoJUm6Qyw8W8jud'
     second_aes_key = _create_aes_key(16)
     enc_text = _aes_encrypt(
@@ -119,22 +123,28 @@ def encrypt_request(data):
         'params': enc_text,
         'encSecKey': enc_aes_key,
     }
-    print(payload)
+    logging.info(payload)
     return payload
 
 
-# req = {
-#     "ids":"[65766]",
-#     "level":"standard",
-#     "encodeType":"aac",
-#     "csrf_token":""
-# }
-# print(_create_aes_key(16))
-# print(_create_aes_key(16))
-# print(_create_aes_key(16))
-# print(_create_aes_key(16))
-#
-# request = encrypt_request(req)
-# print('request=')
-# print(request['params'])
-# print(request['encSecKey'])
+def get_url_by_song_id(id):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) "
+                      "AppleWebKit/537.36 (KHTML, like Gecko) "
+                      "Chrome/80.0.3987.122 Safari/537.36",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "x-real-ip": "211.161.244.70",
+    }
+    url = "https://music.163.com/weapi/song/enhance/player/url/v1?csrf_token="
+    query = {
+        "ids": "[%s]" % id,
+        "level": "standard",
+        "encodeType": "aac",
+        "csrf_token": ""
+    }
+
+    response = requests.post(url, headers=headers, data=encrypt_request(query))
+    ret_json = response.json()
+    url = ret_json["data"][0].get("url")
+    return url
+

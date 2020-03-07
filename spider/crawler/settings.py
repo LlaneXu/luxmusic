@@ -100,3 +100,5 @@ FILES_STORE = settings.MUSIC_FOLDER
 #HTTPCACHE_DIR = 'httpcache'
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
+LOG_FORMAT = "%(asctime)s [%(name)s] %(lineno)d %(levelname)s: %(message)s"
+# LOG_LEVEL = 'DEBUG'

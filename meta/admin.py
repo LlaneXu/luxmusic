@@ -12,7 +12,7 @@ class AlbumAdmin(admin.ModelAdmin):
 
 
 class SongAdmin(admin.ModelAdmin):
-    list_display = ("id", "netease_id", "name", "artist", "album",)
+    list_display = ("id", "netease_id", "name", "artist", "album", "source", "downloaded", "ext",)
     readonly_fields = ("id",)
 
     def artist(self, obj):

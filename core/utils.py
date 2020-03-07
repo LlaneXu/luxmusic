@@ -15,6 +15,8 @@ Todo:
 """
 # system import
 import json
+import sys
+import logging
 from django.db.models.fields.related import ForeignKey
 # 3rd import
 
@@ -160,3 +162,24 @@ def invert_camelize(camel):
 def queryset_to_js(instance, keys=None, json_keys=None, object_keys=None):
     ret = attr_to_dict(instance, keys,json_keys, object_keys)
     return json_camelize(ret)
+
+
+def init_logging():
+    logger = logging.getLogger()
+    if logger.hasHandlers():
+        logger.handlers.pop()
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setLevel(logging.INFO)
+    formater = logging.Formatter(
+        fmt="%(asctime)s [%(name)s] %(lineno)d %(levelname)s: %(message)s",
+        datefmt="%Y-%M-%d %H:%M:%S"
+    )
+    handler.setFormatter(formater)
+    logger.addHandler(handler)
+    # logging.basicConfig(
+    #     stream=sys.stdout,
+    #     format="%(asctime)s %(name)s %(lineno)d %(levelname)s: %(message)s",
+    #     level=logging.INFO,
+    #     datefmt="%Y-%M-%d %H:%M:%S"
+    # )
+    # pass

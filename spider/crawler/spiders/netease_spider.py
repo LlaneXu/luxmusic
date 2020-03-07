@@ -23,12 +23,17 @@ Todo:
 
 # Create your models here.
 import json
+import logging
 from urllib import request
 import scrapy
 from scrapy.http import Request, FormRequest
 from ..items import SongItem
-from ..netease import encrypt_request
+try:
+    from core.netease import encrypt_request
+except:
+    from ..netease import encrypt_request
 
+logger = logging.getLogger("spider")
 
 class Netease_Spider(scrapy.Spider):
     name = 'netease'
@@ -83,10 +88,10 @@ class Netease_Spider(scrapy.Spider):
     def parse_song(self, response):
         # decode meta information
         msg = json.loads(response.body)
+        logging.info(json.dumps(msg, indent=4))
         data = msg['songs']
         privileges = msg["privileges"]
         code = msg['code']
-        print(json.dumps(data[0], indent=4, ensure_ascii=False))
         meta = data[0]
         item = SongItem(
             id=meta["id"],
@@ -113,22 +118,19 @@ class Netease_Spider(scrapy.Spider):
         )
 
     def parse_song_file(self, response):
-        print("url:", response.url)
-        print("meta:", response.meta)
         msg = json.loads(response.body)
-        print("body:", response.body)
+        logging.info(json.dumps(msg, indent=4))
         code = msg['code']
         data = msg.get('data')
         if not data:
             return
-        print(json.dumps(data[0], indent=4))
         item = response.meta["item"]
         url = data[0]['url']
         if not url:
-            print("no download url")
-            return
-        item["file_urls"] = [url]
-        item["ext"] = "m4a"
+            item["file_urls"] = []
+        else:
+            item["file_urls"] = [url]
+            item["ext"] = url.split(".")[-1]
         # path = get_path_from_meta(item)
         # item["files"] = [path]
         return item

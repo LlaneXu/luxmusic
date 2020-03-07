@@ -5,12 +5,16 @@
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 import os
+import logging
 import subprocess
 import datetime
 from scrapy.pipelines.files import FilesPipeline
 from meta.models import Artist, Album, Song
 from django.utils import timezone
-from core.media import get_path_from_meta
+from core.media import get_path_from_meta, get_artists_from_meta
+
+
+logger = logging.getLogger("spider")
 
 class SongPipeline(FilesPipeline):
     def process_item(self, item, spider):
@@ -43,11 +47,18 @@ class SongPipeline(FilesPipeline):
             defaults={
                 "name": item["name"],
                 "album": album_obj,
+                "source": "netease",
             }
         )
         for obj in artists_obj:
             song_obj.artists.add(obj)
         song_obj.save()
+        if song_obj.downloaded:
+            logger.warning("%s has been downloaded" % song_obj.name)
+            return
+        if len(item.get("file_urls",[])) == 0:
+            logger.warning("%s no url")
+            return
         self.song_obj = song_obj
         return super().process_item(item, spider)
 
@@ -76,7 +87,7 @@ class SongPipeline(FilesPipeline):
         newpath = "%s_id3.%s" % (name, ext)
         cmd.append(abspath)
         cmd.append("-metadata")
-        cmd.append("artist=%s" % item["artists"][0]["name"])
+        cmd.append("artist=%s" % get_artists_from_meta(item))
         cmd.append("-metadata")
         cmd.append("album=%s" % item["album"]["name"])
         cmd.append("-metadata")

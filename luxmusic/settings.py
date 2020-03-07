@@ -37,7 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'corsheaders',
+    'daemon',
+    'tools',
     'meta',
 ]
 
@@ -89,6 +90,12 @@ DATABASES = {
         'PASSWORD': 'root',
         'HOST': 'localhost',
     }
+}
+
+REDIS = {
+    'HOST': 'localhost',
+    'PORT': 6379,
+    'DOWNLOAD_KEY': '_download_queue',
 }
 
 

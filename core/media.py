@@ -23,6 +23,11 @@ Todo:
 
 # Create your models here.
 
+def get_artists_from_meta(meta):
+    artists = [artist["name"] for artist in meta.get("artists")]
+    artists.sort()
+    return "&".join(artists)
+
 def get_path_from_meta(meta):
     """
 
@@ -41,6 +46,21 @@ def get_path_from_meta(meta):
     }
     :return:
     """
-    artists = "&".join([artist["name"] for artist in meta.get("artists")])
+    artists = get_artists_from_meta(meta)
     filename = "%s - %s.%s" % (artists, meta["name"], meta["ext"])
     return "%s/%s" % (artists, filename)
+
+
+def test():
+    meta = {
+        "name": "沧海一声笑",
+        "artists": [{
+            "name": "黄霑",
+        }, {
+            "name": "罗大佑",
+        }, {
+            "name": "徐克",
+        }],
+        "ext": "mp3"
+    }
+    print(get_path_from_meta(meta))
