@@ -11,3 +11,7 @@ music
 
 # python cache
 __pycache__
+
+
+# local setting file
+luxmusic/settings.py
