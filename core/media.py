@@ -22,11 +22,25 @@ Todo:
 # module level variables here
 
 # Create your models here.
+from django.conf import settings
+
 
 def get_artists_from_meta(meta):
     artists = [artist["name"] for artist in meta.get("artists")]
     artists.sort()
     return "&".join(artists)
+
+
+def get_filename_from_meta(meta):
+    return "%s - %s.%s" % (get_artists_from_meta(meta), meta["name"], meta["ext"])
+
+def get_relative_path_from_meta(meta):
+    return "%s/%s/%s" % (get_artists_from_meta(meta), meta["album"]["name"],get_filename_from_meta(meta))
+
+
+def get_url_from_meta(meta):
+    return "%s/%s" % (settings.MUSIC_URL, get_relative_path_from_meta(meta))
+
 
 def get_path_from_meta(meta):
     """
@@ -44,11 +58,11 @@ def get_path_from_meta(meta):
             "name": "",
         }
     }
+    :param dist:
+    whether get distribution folder into the path
     :return:
     """
-    artists = get_artists_from_meta(meta)
-    filename = "%s - %s.%s" % (artists, meta["name"], meta["ext"])
-    return "%s/%s" % (artists, filename)
+    return "%s/%s" % (settings.MUSIC_FOLDER, get_relative_path_from_meta(meta))
 
 
 def test():

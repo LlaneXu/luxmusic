@@ -11,10 +11,8 @@ import datetime
 from scrapy.pipelines.files import FilesPipeline
 from meta.models import Artist, Album, Song
 from django.utils import timezone
-from core.media import get_path_from_meta, get_artists_from_meta
+from core.media import get_relative_path_from_meta, get_artists_from_meta
 
-
-logger = logging.getLogger("spider")
 
 class SongPipeline(FilesPipeline):
     def process_item(self, item, spider):
@@ -54,16 +52,16 @@ class SongPipeline(FilesPipeline):
             song_obj.artists.add(obj)
         song_obj.save()
         if song_obj.downloaded:
-            logger.warning("%s has been downloaded" % song_obj.name)
+            logging.warning("%s has been downloaded" % song_obj.name)
             return
         if len(item.get("file_urls",[])) == 0:
-            logger.warning("%s no url")
+            logging.warning("%s no url")
             return
         self.song_obj = song_obj
         return super().process_item(item, spider)
 
     def file_path(self, request, response=None, info=None):
-        return get_path_from_meta(self.item)
+        return get_relative_path_from_meta(self.item)
         # artists = "&".join([artist["name"] for artist in self.item["artists"]])
         # filename = "%s - %s.m4a" % (artists, self.item["name"])
         # return "%s/%s" % (artists, filename)
@@ -84,7 +82,7 @@ class SongPipeline(FilesPipeline):
         path = os.path.join(folder, path)
         abspath = os.path.abspath(path)
         name, ext = os.path.splitext(abspath)
-        newpath = "%s_id3.%s" % (name, ext)
+        newpath = "%s_id3%s" % (name, ext)
         cmd.append(abspath)
         cmd.append("-metadata")
         cmd.append("artist=%s" % get_artists_from_meta(item))
@@ -100,6 +98,7 @@ class SongPipeline(FilesPipeline):
         cmd.append(newpath)
         subprocess.call(cmd)
         os.rename(newpath, abspath)
+        logging.info("downloaded: %s" % abspath)
         self.song_obj.downloaded = True
         self.song_obj.save()
         return item

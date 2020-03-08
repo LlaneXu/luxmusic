@@ -1,8 +1,9 @@
 from core.response import Response, ResponseException
 from .models import Song, Artist
-from core.media import get_path_from_meta
+from core.media import get_url_from_meta
 from core.netease import get_url_by_song_id
 from core.redis_queue import push_download
+from django.conf import settings
 
 # Create your views here.
 
@@ -47,7 +48,7 @@ class SongView(Response):
 
         # can find the song record and downloaded, return local file
         if ret.get("downloaded"):
-            ret["url"] = get_path_from_meta(ret)
+            ret["url"] =   get_url_from_meta(ret)
         else:
             if netease_id:
                 data = {

@@ -24,11 +24,17 @@ Todo:
 # Create your models here.
 
 import re
+import os
 import requests
 from django.http import HttpResponse
 from urllib.parse import urlparse, urljoin
 from django.conf import settings
 
+INDEX_PATH = os.path.join(settings.BASE_DIR, "dist/index.html")
+
+
+def main(request, *args, **kwargs):
+    return HttpResponse(open(INDEX_PATH).read())
 
 def proxy_view(request, *args, **kwargs):
 

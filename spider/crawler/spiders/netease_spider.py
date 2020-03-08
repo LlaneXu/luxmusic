@@ -88,7 +88,7 @@ class Netease_Spider(scrapy.Spider):
     def parse_song(self, response):
         # decode meta information
         msg = json.loads(response.body)
-        logging.info(json.dumps(msg, indent=4))
+        logging.info(json.dumps(msg, indent=4, ensure_ascii=False))
         data = msg['songs']
         privileges = msg["privileges"]
         code = msg['code']
@@ -119,7 +119,7 @@ class Netease_Spider(scrapy.Spider):
 
     def parse_song_file(self, response):
         msg = json.loads(response.body)
-        logging.info(json.dumps(msg, indent=4))
+        logging.info(json.dumps(msg, indent=4, ensure_ascii=False))
         code = msg['code']
         data = msg.get('data')
         if not data:

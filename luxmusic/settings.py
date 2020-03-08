@@ -25,7 +25,7 @@ SECRET_KEY = 'hlsxflerh$g+a%gntl!#_2_&*uy&da0v+e5b)i1*@78+5db1rz'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -136,7 +136,15 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'
+STATICFILES_DIRS = [
+    'dist',
+]
 
 PROXY_URL = 'http://127.0.0.1:3000'
 
-MUSIC_FOLDER = os.path.abspath(os.path.join(os.path.dirname(__file__), '../music'))
+MUSIC_FOLDER_NAME = "music"
+# used for backend download, local path
+MUSIC_FOLDER = os.path.abspath(os.path.join(BASE_DIR, "dist", MUSIC_FOLDER_NAME))
+# used for api, query url
+MUSIC_URL = os.path.join(STATIC_URL.strip("/"), MUSIC_FOLDER_NAME)
+

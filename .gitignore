@@ -1,5 +1,6 @@
 # virtual environment
 venv
+dist
 
 # music folder
 music
