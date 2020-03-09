@@ -15,11 +15,14 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include, re_path
-from .views import proxy_view, main
+from .views import main
+from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include("luxmusic.api")),
-    re_path(r'^$', main),
-    re_path(r'^(?P<path>.*)/$', proxy_view)
 ]
+if settings.DEBUG:
+    urlpatterns.append(
+        re_path(r'^$', main)
+    )

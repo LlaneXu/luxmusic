@@ -24,8 +24,10 @@ Todo:
 # Create your models here.
 
 
-from django.urls import path, include
+from django.urls import path, include, re_path
+from .views import proxy_view
 
 urlpatterns = [
     path('meta/', include("meta.url")),
+    path('<path:path>', proxy_view),
 ]

@@ -36,8 +36,8 @@ INDEX_PATH = os.path.join(settings.BASE_DIR, "dist/index.html")
 def main(request, *args, **kwargs):
     return HttpResponse(open(INDEX_PATH).read())
 
-def proxy_view(request, *args, **kwargs):
 
+def proxy_view(request, *args, **kwargs):
     headers = get_headers(request.META)
     params = request.GET.copy()
 
@@ -47,8 +47,7 @@ def proxy_view(request, *args, **kwargs):
         if key.lower() == 'content-length':
             del headers[key]
 
-
-    response = requests.request(request.method, urljoin(settings.PROXY_URL, request.path), headers=headers, params=params)
+    response = requests.request(request.method, urljoin(settings.PROXY_URL, kwargs["path"]), headers=headers, params=params)
 
     proxy_response = HttpResponse(
         response.content,
