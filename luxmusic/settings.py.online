@@ -139,7 +139,7 @@ PROXY_URL = 'http://127.0.0.1:3000'
 
 MUSIC_FOLDER_NAME = "music"
 # used for backend download, local path
-MUSIC_FOLDER = os.path.abspath(os.path.join('/mnt/sdb', STATIC_URL, MUSIC_FOLDER_NAME))
+MUSIC_FOLDER = os.path.abspath(os.path.join('/mnt/sdb', STATIC_URL.strip('/'), MUSIC_FOLDER_NAME))
 # used for api, query url
 MUSIC_URL = os.path.join(STATIC_URL.strip("/"), MUSIC_FOLDER_NAME)
 

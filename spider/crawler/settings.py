@@ -78,8 +78,8 @@ ROBOTSTXT_OBEY = True
 ITEM_PIPELINES = {
    'crawler.pipelines.SongPipeline': 300,
 }
-# FILES_STORE = settings.MUSIC_FOLDER
-FILES_STORE = "gs://luxmusic_bucket/music"
+FILES_STORE = settings.MUSIC_FOLDER
+# FILES_STORE = "gs://luxmusic_bucket/music"
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
 #AUTOTHROTTLE_ENABLED = True
