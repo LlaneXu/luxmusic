@@ -23,7 +23,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'hlsxflerh$g+a%gntl!#_2_&*uy&da0v+e5b)i1*@78+5db1rz'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['biliblue.com']
 
@@ -52,11 +52,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
-#跨域增加忽略
-CORS_ALLOW_CREDENTIALS = True
-CORS_ORIGIN_ALLOW_ALL = True
-CORS_ORIGIN_WHITELIST = ['http://127.0.0.1:8080']
 
 ROOT_URLCONF = 'luxmusic.urls'
 
@@ -144,7 +139,7 @@ PROXY_URL = 'http://127.0.0.1:3000'
 
 MUSIC_FOLDER_NAME = "music"
 # used for backend download, local path
-MUSIC_FOLDER = os.path.abspath(os.path.join(BASE_DIR, "dist", MUSIC_FOLDER_NAME))
+MUSIC_FOLDER = os.path.abspath(os.path.join('/mnt/sdb', STATIC_URL, MUSIC_FOLDER_NAME))
 # used for api, query url
 MUSIC_URL = os.path.join(STATIC_URL.strip("/"), MUSIC_FOLDER_NAME)
 
