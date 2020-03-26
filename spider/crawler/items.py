@@ -17,3 +17,4 @@ class SongItem(scrapy.Item):
     file_urls = scrapy.Field()        # 歌曲下载地址
     files = scrapy.Field()       # 本地地址
     ext = scrapy.Field()
+    uuid = scrapy.Field()

@@ -13,7 +13,7 @@ class AlbumAdmin(admin.ModelAdmin):
 
 class SongAdmin(admin.ModelAdmin):
     list_display = ("id", "netease_id", "name", "artist", "album", "source", "downloaded", "ext",)
-    readonly_fields = ("id",)
+    readonly_fields = ("id", "uuid",)
 
     def artist(self, obj):
         return '&'.join([str(a) for a in obj.artists.all()])

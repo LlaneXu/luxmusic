@@ -100,7 +100,7 @@ class Netease_Spider(scrapy.Spider):
             album=meta["al"],
             publishTime=meta["publishTime"]
         )
-
+        # todo 获取专辑作者信息
         url = "https://music.163.com/weapi/song/enhance/player/url/v1?csrf_token="
         query = {
             "ids": "[%s]" % self.id,

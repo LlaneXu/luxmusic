@@ -1,10 +1,11 @@
+import uuid
 from django.db import models
-from core.models import Model
+from core.models import ModelWithName, UUIDFieldNoDash
 from core import utils
 
 # Create your models here.
 
-class Artist(Model):
+class Artist(ModelWithName):
     netease_id = models.IntegerField(null=True, blank=True)
     # name = models.CharField(max_length=32)
     pic = models.CharField(max_length=255, null=True, blank=True)
@@ -33,9 +34,10 @@ class Artist(Model):
     #     return ret
 
 
-class Album(Model):
+class Album(ModelWithName):
     netease_id = models.IntegerField(null=True, blank=True)
     # name = models.CharField(max_length=32)
+    artist = models.ForeignKey(Artist, on_delete=models.CASCADE, null=True, blank=True)
     pic = models.CharField(max_length=255, null=True, blank=True)
     publish_time = models.DateTimeField(default=None, null=True, blank=True)
 
@@ -48,7 +50,8 @@ class Album(Model):
     #     return ret
 
 
-class Song(Model):
+class Song(ModelWithName):
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     netease_id = models.IntegerField(null=True, blank=True)
     # name = models.CharField(max_length=32)
     artists = models.ManyToManyField(Artist)
@@ -67,8 +70,9 @@ class Song(Model):
     ), null=True, blank=True)
 
 
-    # def __str__(self):
-    #     return self.name
+    def __str__(self):
+        artists = "&".join([artist.name for artist in self.artists.all()])
+        return "%s - %s(%s)" % (artists, self.name, self.album)
     #
     # def to_dict(self):
     #     ret = utils.queryset_to_js(self)

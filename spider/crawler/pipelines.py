@@ -23,8 +23,8 @@ class SongPipeline(FilesPipeline):
         artists_obj = []
         for artist in artists:
             obj, created = Artist.objects.update_or_create(
-                netease_id=artist["id"],
-                defaults={"name": artist["name"]}
+                name=artist["name"],
+                defaults={"netease_id": artist["id"]}
             )
             artists_obj.append(obj)
         ts = item["publishTime"]
@@ -33,24 +33,30 @@ class SongPipeline(FilesPipeline):
         tz = timezone.get_current_timezone()
         publish_time = datetime.datetime.fromtimestamp(ts, tz)
         album_obj, created = Album.objects.update_or_create(
-            netease_id=album["id"],
+            name=album["name"],
             defaults={
-                "name": album["name"],
                 "pic": album["picUrl"],
-                "publish_time": publish_time
+                "publish_time": publish_time,
+                "netease_id": album["id"],
             }
         )
-        song_obj, created = Song.objects.update_or_create(
-            netease_id=item["id"],
-            defaults={
-                "name": item["name"],
-                "album": album_obj,
-                "source": "netease",
-            }
-        )
+        songs = Song.objects.filter(name=item["name"],album=album_obj)
         for obj in artists_obj:
-            song_obj.artists.add(obj)
-        song_obj.save()
+            songs = songs.filter(artists=obj)
+        if songs:
+            song_obj = songs[0]
+            song_obj.netease_id=item["id"]
+            song_obj.save()
+        else:
+            song_obj = Song.objects.create(
+                name=item["name"],
+                album=album_obj,
+                netease_id=item["id"],
+                source="netease",
+            )
+            for obj in artists_obj:
+                song_obj.artists.add(obj)
+            song_obj.save()
         if song_obj.downloaded:
             logging.warning("%s has been downloaded" % song_obj.name)
             return
@@ -58,6 +64,7 @@ class SongPipeline(FilesPipeline):
             logging.warning("%s no url")
             return
         self.song_obj = song_obj
+        self.item["uuid"] = song_obj.uuid.hex
         return super().process_item(item, spider)
 
     def file_path(self, request, response=None, info=None):
@@ -99,6 +106,7 @@ class SongPipeline(FilesPipeline):
         subprocess.call(cmd)
         os.rename(newpath, abspath)
         logging.info("downloaded: %s" % abspath)
+        self.song_obj.source = "netease"
         self.song_obj.downloaded = True
         self.song_obj.save()
         return item

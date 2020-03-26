@@ -48,7 +48,7 @@ class SongView(Response):
 
         # can find the song record and downloaded, return local file
         if ret.get("downloaded"):
-            ret["url"] =   get_url_from_meta(ret)
+            ret["url"] = get_url_from_meta(ret)
         else:
             if netease_id:
                 data = {

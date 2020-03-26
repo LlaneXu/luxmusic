@@ -30,17 +30,20 @@ def get_artists_from_meta(meta):
     artists.sort()
     return "&".join(artists)
 
+def get_export_relative_path_from_meta(meta):
+    filename = "%s - %s.%s" % (get_artists_from_meta(meta), meta["name"], meta["ext"])
+    return "%s/%s/%s" % (get_artists_from_meta(meta), meta["album"]["name"],filename)
 
 def get_filename_from_meta(meta):
-    return "%s - %s.%s" % (get_artists_from_meta(meta), meta["name"], meta["ext"])
+    # return "%s - %s.%s" % (get_artists_from_meta(meta), meta["name"], meta["ext"])
+    return "%s.%s" % (meta["uuid"], meta["ext"])
 
 def get_relative_path_from_meta(meta):
-    return "%s/%s/%s" % (get_artists_from_meta(meta), meta["album"]["name"],get_filename_from_meta(meta))
-
+    # return "%s/%s/%s" % (get_artists_from_meta(meta), meta["album"]["name"],get_filename_from_meta(meta))
+    return get_filename_from_meta(meta)
 
 def get_url_from_meta(meta):
     return "%s/%s" % (settings.MUSIC_URL, get_relative_path_from_meta(meta))
-
 
 def get_path_from_meta(meta):
     """

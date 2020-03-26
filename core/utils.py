@@ -14,6 +14,8 @@ Todo:
 
 """
 # system import
+import os
+import shutil
 import json
 import sys
 import logging
@@ -77,7 +79,11 @@ def attr_to_dict(instance, keys=None, json_keys=None, foreign_keys=None, many2ma
         many2many_keys = instance_many2many_name
 
     for key in keys:
-        ret[key] = getattr(instance, key)
+        value = getattr(instance, key)
+        if key == "uuid":
+            ret[key] = value.hex
+        else:
+            ret[key] = value
     for key in json_keys:
         try:
             ret[key] = json.loads(getattr(instance, key))
@@ -86,7 +92,11 @@ def attr_to_dict(instance, keys=None, json_keys=None, foreign_keys=None, many2ma
             traceback.print_exc()
             pass
     for key in foreign_keys:
-        ret[key] = getattr(instance, key).to_dict()
+        value = getattr(instance, key)
+        if value:
+            ret[key] = value.to_dict()
+        else:
+            ret[key] = {}
     for key in many2many_keys:
         ret[key] = [item.to_dict() for item in getattr(instance, key).all()]
     return ret
@@ -183,3 +193,16 @@ def init_logging():
     #     datefmt="%Y-%M-%d %H:%M:%S"
     # )
     # pass
+
+
+def copy(src, dst):
+    """
+    including creating folder
+    :param src:
+    :param dst:
+    :return:
+    """
+    parent = os.path.split(dst)[0]
+    if not os.path.exists(parent):
+        os.makedirs(parent)
+    shutil.copy(src, dst)
