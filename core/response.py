@@ -96,3 +96,8 @@ class Response(object):
         return self.json_response(response_data, status_code)
 
 
+def check_params(request, required_keys):
+    for key in required_keys:
+        if key not in request.GET:
+            raise ResponseException("need param: %s" % key)
+

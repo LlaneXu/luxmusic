@@ -148,3 +148,19 @@ def get_url_by_song_id(id):
     url = ret_json["data"][0].get("url")
     return url
 
+
+def request(options):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) "
+                      "AppleWebKit/537.36 (KHTML, like Gecko) "
+                      "Chrome/80.0.3987.122 Safari/537.36",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "x-real-ip": "211.161.244.70",
+    }
+    method = options.get("method", "POST")
+    headers = options.get("headers", headers)
+    url = options.get("url")
+    data = options.get("data", {})
+    return requests.request(method, url, headers=headers, data=encrypt_request(data))
+
+

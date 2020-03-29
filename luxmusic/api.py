@@ -28,6 +28,8 @@ from django.urls import path, include, re_path
 from .views import proxy_view
 
 urlpatterns = [
-    path('meta/', include("meta.url")),
+    path('meta/', include("meta.urls")),
+    path('v1/', include("v1.urls")),
+
     path('<path:path>', proxy_view),
 ]
