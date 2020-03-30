@@ -125,8 +125,11 @@ class Playlist(Response):
             "name": r["name"],
             "description": r["description"],
             "tracks": r["tracks"],
-            "coverImgUrl": r["coverImgUrl"],
+            "picUrl": r["coverImgUrl"],
             "tags": r["tags"],
+            "playCount": r["playCount"],
+            "commentCount": r["commentCount"],
+            "shareCount": r["shareCount"],
         }
         return ret
 
