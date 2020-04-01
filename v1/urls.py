@@ -30,4 +30,6 @@ urlpatterns = [
     path('personalized/<path:platform>/', views.Personalized()),
     path('playlist/<path:platform>/', views.Playlist()),
     path('album/<path:platform>/', views.Album()),
+    path('song/<path:platform>/', views.Song()),
+    path('url/<path:platform>/', views.Url()),
 ]

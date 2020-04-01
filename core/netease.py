@@ -33,6 +33,7 @@ import Crypto.Cipher.AES as AES
 import Crypto.PublicKey.RSA as RSA
 from Crypto.Cipher import PKCS1_OAEP
 import base64
+from .response import ResponseException
 
 # to avoid useless re-calculate
 KEY = None
@@ -161,6 +162,10 @@ def request(options):
     headers = options.get("headers", headers)
     url = options.get("url")
     data = options.get("data", {})
-    return requests.request(method, url, headers=headers, data=encrypt_request(data))
+    response = requests.request(method, url, headers=headers, data=encrypt_request(data))
+    ret = response.json()
+    if ret["code"] != 200:
+        raise ResponseException(ret)
+    return ret
 
 

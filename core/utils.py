@@ -174,6 +174,18 @@ def queryset_to_js(instance, keys=None, json_keys=None, object_keys=None):
     return json_camelize(ret)
 
 
+def map_json(data, key_map):
+    """
+    translate srcKey into destKey of a json
+    :param data:
+    :param map: ((src_key, dest_key),)
+    :return:
+    """
+    for (src_key, dest_key) in key_map:
+        data[dest_key] = data[src_key]
+        del data[src_key]
+    return data
+
 def init_logging():
     logger = logging.getLogger()
     if logger.hasHandlers():

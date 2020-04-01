@@ -14,12 +14,16 @@ Todo:
 
 """
 # system import
-
+import logging
 # 3rd import
 
 # self import
 from core.response import Response, ResponseException, check_params
 from core import netease
+from core.utils import map_json
+from meta import models
+from core.media import get_url_from_meta
+from core.redis_queue import push_download
 # module level variables here
 
 # Create your models here.
@@ -68,8 +72,7 @@ class Personalized(Response):
             raise ResponseException("unrecognized platform: %s" % platform)
 
         response = netease.request(options)
-        response_json = response.json()
-        ret = response_json["result"]
+        ret = response["result"]
         return ret
 
 
@@ -77,6 +80,7 @@ class Playlist(Response):
     def get(self, request, json_data, *args, **kwargs):
         """
 
+        http://localhost:8000/api/v1/playlist/netease/?id=4900028836
         :param request:
         :param json_data:
         :param args:
@@ -89,7 +93,7 @@ class Playlist(Response):
             "tracks": [{
                 "id":
                 "name":
-                "ar": [{
+                "ar": [{   ar->artist
                     "id":
                     "name"
                 }]
@@ -118,18 +122,24 @@ class Playlist(Response):
         check_params(request, required_keys)
 
         response = netease.request(options)
-        response_json = response.json()
-        r = response_json["playlist"]
+        r = response["playlist"]
+        tracks = []
+        key_map = (("ar", "artist"), ("al", "album"))
+        for track in r["tracks"]:
+            map_json(track, key_map)
+            tracks.append(track)
+
         ret = {
             "id": r["id"],
             "name": r["name"],
             "description": r["description"],
-            "tracks": r["tracks"],
+            "tracks": tracks,
             "picUrl": r["coverImgUrl"],
             "tags": r["tags"],
             "playCount": r["playCount"],
             "commentCount": r["commentCount"],
             "shareCount": r["shareCount"],
+            "platform": "netease",
         }
         return ret
 
@@ -154,10 +164,138 @@ class Album(Response):
         options["url"] = options["url"]+request.GET["id"]
 
         response = netease.request(options)
-        response_json = response.json()
         ret = {
-            "songs": response_json["songs"],
-            "album": response_json["album"]
+            "songs": response["songs"],
+            "album": response["album"]
         }
         return ret
 
+
+class Song(Response):
+    def get(self, request, json_data, *args, **kwargs):
+        """
+        http://localhost/api/v1/url/<platform>/?id=xx&uuid=xx&netease_id=xx&name=xx&artists=xx&album=xx
+        platform: local | netease | kugou | qq
+        when platform =local, need id or uuid or netease_id or name+artists (+album)
+        when platform = others, just need id
+        :param request:
+        :param json_data:
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        def parse_netease(data):
+            return data
+
+        id = request.GET.get("id")
+        request_map = {
+            "netease": {
+                "method": "POST",
+                "url": "https://music.163.com/weapi/v3/song/detail",
+                "data": {
+                    "c": '[{"id": %s}]' % id,
+                    "ids": "[%s]" % id,
+                },
+                "func": parse_netease,
+            },
+        }
+        platform = kwargs["platform"]
+        options = request_map.get(platform)
+        if not options:
+            raise ResponseException("unrecognized platform: %s" % platform)
+        required_keys = ["id"]
+        check_params(request, required_keys)
+        response = netease.request(options)
+        func = options["func"]
+
+        return func(response)
+
+
+
+class Url(Response):
+    def get_local(self, request):
+        id = request.GET.get('id')
+        netease_id = request.GET.get('neteaseId')
+        artists = request.GET.getlist('artists')
+        name = request.GET.get('name')
+        album = request.GET.get('album')
+
+        ret = {}
+        # use id to query first
+        try:
+            if id:
+                song = models.Song.objects.get(id=id, downloaded=True)
+            elif netease_id:
+                song = models.Song.objects.get(netease_id=netease_id, downloaded=True)
+            elif artists and len(artists) and name:
+                songs = models.Song.objects.filter(downloaded=True)
+                for artist in artists:
+                    songs = songs.filter(artists__name__exact=artist)
+                if album:
+                    songs = songs.filter(album__name=album)
+                if name:
+                    songs = songs.filter(name=name)
+                if not songs.exists():
+                    return {}
+                else:
+                    song = songs[0]
+            else:
+                raise ResponseException("not enough params")
+
+            ret = song.to_dict()
+            ret["url"] = get_url_from_meta(ret)
+
+        # can find the song record and downloaded, return local file
+        except models.Song.DoesNotExist:
+            print("push download (netease): id=%s" % netease_id)
+            data = {
+                "source": "netease",
+                "id": netease_id,
+            }
+            push_download(data)
+
+        return ret
+    def get(self, request, json_data, *args, **kwargs):
+        """
+        http://localhost/api/v1/url/<platform>/?id=xx&uuid=xx&netease_id=xx&name=xx&artists=xx&album=xx
+        platform: local | netease | kugou | qq
+        when platform =local, need id or uuid or netease_id or name+artists (+album)
+        when platform = others, just need id
+        :param request:
+        :param json_data:
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        def parse_netease(data):
+            return {
+                "url": data["data"][0].get("url")
+            }
+
+        id = request.GET.get("id")
+        request_map = {
+            "netease": {
+                "method": "POST",
+                "url": "https://music.163.com/weapi/song/enhance/player/url/v1?csrf_token=",
+                "data": {
+                    "ids": "[%s]" % id,
+                    "level": "standard",
+                    "encodeType": "aac",
+                    "csrf_token": ""
+                },
+                "func": parse_netease,
+            },
+        }
+        platform = kwargs["platform"]
+        if platform == "local":
+            return self.get_local(request)
+        else:
+            options = request_map.get(platform)
+            if not options:
+                raise ResponseException("unrecognized platform: %s" % platform)
+            required_keys = ["id"]
+            check_params(request, required_keys)
+            response = netease.request(options)
+            func = options["func"]
+
+            return func(response)
