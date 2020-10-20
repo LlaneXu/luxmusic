@@ -77,3 +77,22 @@ class Song(ModelWithName):
     # def to_dict(self):
     #     ret = utils.queryset_to_js(self)
     #     return ret
+
+
+
+class User(ModelWithName):
+    netease_id = models.IntegerField(null=True, blank=True)
+    city = models.CharField(max_length=16, blank=True, null=True)
+    gender = models.CharField(max_length=1, choices=(('0', 'Unknown'), ('1', "male"), ("2", "female")))
+    birthday = models.DateField(null=True, blank=True)
+
+    def __str__(self):
+        return "%s (%s)" % (self.name, self.id)
+
+
+class Comment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    content = models.TextField()
+
+    def __str__(self):
+        return self.content

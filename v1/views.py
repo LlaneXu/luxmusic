@@ -93,7 +93,7 @@ class Playlist(Response):
             "tracks": [{
                 "id":
                 "name":
-                "ar": [{   ar->artist
+                "ar": [{   ar->artists
                     "id":
                     "name"
                 }]
@@ -124,7 +124,7 @@ class Playlist(Response):
         response = netease.request(options)
         r = response["playlist"]
         tracks = []
-        key_map = (("ar", "artist"), ("al", "album"))
+        key_map = (("ar", "artists"), ("al", "album"))
         for track in r["tracks"]:
             map_json(track, key_map)
             tracks.append(track)

@@ -124,7 +124,7 @@ def encrypt_request(data):
         'params': enc_text,
         'encSecKey': enc_aes_key,
     }
-    logging.info(payload)
+    logging.warning(payload)
     return payload
 
 
@@ -157,12 +157,15 @@ def request(options):
                       "Chrome/80.0.3987.122 Safari/537.36",
         "Content-Type": "application/x-www-form-urlencoded",
         "x-real-ip": "211.161.244.70",
+        # "Cookie": "NMTID=00OmYrUWn7kjnrMiEghv8VtKW-mDz8AAAF0wg82nQ; csrftoken=MfSAeFq1h34wVW5ZZkg5O2mydtQzEPDwK5L8giRb0AxzJ1K9n6pVdfbznJIdWeJg",
+        "Referer": "https://music.163.com",
     }
     method = options.get("method", "POST")
     headers = options.get("headers", headers)
     url = options.get("url")
     data = options.get("data", {})
     response = requests.request(method, url, headers=headers, data=encrypt_request(data))
+
     ret = response.json()
     if ret["code"] != 200:
         raise ResponseException(ret)

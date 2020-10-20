@@ -41,6 +41,7 @@ def proxy_view(request, *args, **kwargs):
     headers = get_headers(request.META)
     params = request.GET.copy()
 
+
     # If there's a content-length header from Django, it's probably in all-caps
     # and requests might not notice it, so just remove it.
     for key in list(headers.keys()):
