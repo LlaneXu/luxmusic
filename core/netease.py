@@ -124,7 +124,7 @@ def encrypt_request(data):
         'params': enc_text,
         'encSecKey': enc_aes_key,
     }
-    logging.warning(payload)
+    # logging.warning(payload)
     return payload
 
 
@@ -151,6 +151,14 @@ def get_url_by_song_id(id):
 
 
 def request(options):
+    response = _request(options)
+
+    ret = response.json()
+    if ret["code"] != 200:
+        raise ResponseException(ret)
+    return ret
+
+def _request(options):
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) "
                       "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -164,11 +172,6 @@ def request(options):
     headers = options.get("headers", headers)
     url = options.get("url")
     data = options.get("data", {})
-    response = requests.request(method, url, headers=headers, data=encrypt_request(data))
-
-    ret = response.json()
-    if ret["code"] != 200:
-        raise ResponseException(ret)
-    return ret
+    return requests.request(method, url, headers=headers, data=encrypt_request(data))
 
 

@@ -2,11 +2,12 @@ import uuid
 from django.db import models
 from core.models import ModelWithName, UUIDFieldNoDash
 from core import utils
+from django.utils.html import format_html
 
 # Create your models here.
 
 class Artist(ModelWithName):
-    netease_id = models.IntegerField(null=True, blank=True)
+    netease_id = models.BigIntegerField(null=True, blank=True)
     # name = models.CharField(max_length=32)
     pic = models.CharField(max_length=255, null=True, blank=True)
 
@@ -35,7 +36,7 @@ class Artist(ModelWithName):
 
 
 class Album(ModelWithName):
-    netease_id = models.IntegerField(null=True, blank=True)
+    netease_id = models.BigIntegerField(null=True, blank=True)
     # name = models.CharField(max_length=32)
     artist = models.ForeignKey(Artist, on_delete=models.CASCADE, null=True, blank=True)
     pic = models.CharField(max_length=255, null=True, blank=True)
@@ -52,7 +53,7 @@ class Album(ModelWithName):
 
 class Song(ModelWithName):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    netease_id = models.IntegerField(null=True, blank=True)
+    netease_id = models.BigIntegerField(null=True, blank=True)
     # name = models.CharField(max_length=32)
     artists = models.ManyToManyField(Artist)
     album = models.ForeignKey(Album, on_delete=models.CASCADE)
@@ -81,18 +82,35 @@ class Song(ModelWithName):
 
 
 class User(ModelWithName):
-    netease_id = models.IntegerField(null=True, blank=True)
+    netease_id = models.BigIntegerField(null=True, blank=True)
     city = models.CharField(max_length=16, blank=True, null=True)
     gender = models.CharField(max_length=1, choices=(('0', 'Unknown'), ('1', "male"), ("2", "female")))
     birthday = models.DateField(null=True, blank=True)
 
     def __str__(self):
-        return "%s (%s)" % (self.name, self.id)
+        return "%s" % (self.name)
 
 
 class Comment(models.Model):
+    netease_id = models.BigIntegerField(null=True, blank=True)
+    replied = models.ManyToManyField("self", blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    song = models.ForeignKey(Song, on_delete=models.CASCADE)
     content = models.TextField()
 
     def __str__(self):
         return self.content
+
+    def replies(self):
+        return "|".join([str(item) for item in self.replied.all()])
+
+    def replies_link(self):
+        html_strings=[]
+        for item in self.replied.all():
+            html_strings.append(
+            '<div><a href="/admin/meta/comment/%s/change/">%s</a><div>' % (item.id, str(item))
+            )
+        return format_html(
+            '<span>'+''.join(html_strings)+'</span>'
+        )
+        # return "replies"

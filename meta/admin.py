@@ -20,13 +20,17 @@ class SongAdmin(admin.ModelAdmin):
 
 
 class UserAdmin(admin.ModelAdmin):
-    list_display = ("id", "name")
+    list_display = ("id", "name", "city", "birthday")
     readonly_fields = ("id",)
 
 
 class CommentAdmin(admin.ModelAdmin):
-    list_display = ("id", "user_id",)
-    readonly_fields = ("id",)
+    fields = ("id", "netease_id", "user", "song", "content", "replies_readonly")
+    list_display = ("id", "user", "song", "content", "replies")
+    readonly_fields = ("id", "replies_readonly",)
+
+    def replies_readonly(self, instance):
+        return instance.replies_link()
 
 admin.site.register(models.Artist, ArtistAdmin)
 admin.site.register(models.Album, AlbumAdmin)
