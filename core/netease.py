@@ -39,6 +39,16 @@ from .response import ResponseException
 KEY = None
 SEC_KEY = None
 
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) "
+                  "AppleWebKit/537.36 (KHTML, like Gecko) "
+                  "Chrome/80.0.3987.122 Safari/537.36",
+    "Content-Type": "application/x-www-form-urlencoded",
+    "x-real-ip": "211.161.244.70",
+    # "Cookie": "NMTID=00OmYrUWn7kjnrMiEghv8VtKW-mDz8AAAF0wg82nQ; csrftoken=MfSAeFq1h34wVW5ZZkg5O2mydtQzEPDwK5L8giRb0AxzJ1K9n6pVdfbznJIdWeJg",
+    "Referer": "https://music.163.com",
+}
+
 def _create_aes_key(size):
     """
     some pares
@@ -129,13 +139,13 @@ def encrypt_request(data):
 
 
 def get_url_by_song_id(id):
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) "
-                      "AppleWebKit/537.36 (KHTML, like Gecko) "
-                      "Chrome/80.0.3987.122 Safari/537.36",
-        "Content-Type": "application/x-www-form-urlencoded",
-        "x-real-ip": "211.161.244.70",
-    }
+    # headers = {
+    #     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) "
+    #                   "AppleWebKit/537.36 (KHTML, like Gecko) "
+    #                   "Chrome/80.0.3987.122 Safari/537.36",
+    #     "Content-Type": "application/x-www-form-urlencoded",
+    #     "x-real-ip": "211.161.244.70",
+    # }
     url = "https://music.163.com/weapi/song/enhance/player/url/v1?csrf_token="
     query = {
         "ids": "[%s]" % id,
@@ -144,7 +154,7 @@ def get_url_by_song_id(id):
         "csrf_token": ""
     }
 
-    response = requests.post(url, headers=headers, data=encrypt_request(query))
+    response = requests.post(url, headers=HEADERS, data=encrypt_request(query))
     ret_json = response.json()
     url = ret_json["data"][0].get("url")
     return url
@@ -159,19 +169,123 @@ def request(options):
     return ret
 
 def _request(options):
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) "
-                      "AppleWebKit/537.36 (KHTML, like Gecko) "
-                      "Chrome/80.0.3987.122 Safari/537.36",
-        "Content-Type": "application/x-www-form-urlencoded",
-        "x-real-ip": "211.161.244.70",
-        # "Cookie": "NMTID=00OmYrUWn7kjnrMiEghv8VtKW-mDz8AAAF0wg82nQ; csrftoken=MfSAeFq1h34wVW5ZZkg5O2mydtQzEPDwK5L8giRb0AxzJ1K9n6pVdfbznJIdWeJg",
-        "Referer": "https://music.163.com",
-    }
+    # headers = {
+    #     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) "
+    #                   "AppleWebKit/537.36 (KHTML, like Gecko) "
+    #                   "Chrome/80.0.3987.122 Safari/537.36",
+    #     "Content-Type": "application/x-www-form-urlencoded",
+    #     "x-real-ip": "211.161.244.70",
+    #     # "Cookie": "NMTID=00OmYrUWn7kjnrMiEghv8VtKW-mDz8AAAF0wg82nQ; csrftoken=MfSAeFq1h34wVW5ZZkg5O2mydtQzEPDwK5L8giRb0AxzJ1K9n6pVdfbznJIdWeJg",
+    #     "Referer": "https://music.163.com",
+    # }
     method = options.get("method", "POST")
-    headers = options.get("headers", headers)
+    headers = options.get("headers", HEADERS)
     url = options.get("url")
     data = options.get("data", {})
     return requests.request(method, url, headers=headers, data=encrypt_request(data))
 
 
+def get_artist_info(artist_id):
+    """
+    https://music.163.com/weapi/v1/artist/${query.id}
+    post
+    encrypted request
+    data:
+    {
+        artist: {
+            id: xx,
+            name: xx,
+        },
+        hotSongs: [{
+            id: xx,
+            name: xx,
+            ar: [{
+                id: xx,
+                name: xx,
+            }],
+            al: {
+                id: xx,
+                name: xx,
+                picUrl: 'https://p2.music.126.net/PcJq6i7zMcPgudejdn1yeg==/109951163256302356.jpg',
+            }
+        }]
+    }
+    :return:
+    """
+    options = {
+        "url": "https://music.163.com/weapi/v1/artist/%s" % artist_id,
+        "data": {
+            # "id": artist_id,
+            # "csrf_token": ""
+        }
+    }
+    response = _request(options)
+    res = response.json()
+    # save cookies for cookies verify later used in other api
+    # self.cookies = response.cookies
+    return res.get("artist", {}), res.get("hotSongs",[])
+
+
+def get_comment(song_id, page=1, cursor=-1):
+    """
+    http://music.163.com/api/v1/resource/comments/R_SO_4_{song_id}?limit={limit}&offset={offset}
+    :return:
+    {
+        code: 200,
+        data: {
+            comments: [{
+                beReplied:[{
+                    user: {
+                        userId: xx,
+                        nickname: xx,
+                    }
+                    beRepliedCommentId: xx,
+                    content: xx
+                }],
+                user: {
+                    userId: xx,
+                    nickname: xx,
+                },
+                commentId: xx,
+                content: xxx,
+            }],
+            totalCount: xxx,
+        }
+    }
+    """
+    options = {
+        "url": "https://music.163.com/weapi/comment/resource/comments/get?csrf_token=",
+        "data": {
+            "rid": "R_SO_4_%s" % song_id,
+            "threadId": "R_SO_4_%s" % song_id,
+            # "offset": (page-1)*100,
+            "pageNo": page,
+            "pageSize": 100,
+            "orderType": 2,
+            "cursor": cursor,
+        }
+    }
+    res = request(options)
+    data = res["data"]
+    return data.get("comments", []), data["totalCount"], data["cursor"]
+
+
+def get_user_info(user_id):
+    """
+    https://music.163.com/api/v1/user/detail/{user_id}
+    :return:
+    {
+        profile: {
+            userId: xx,
+            nickname: xx,
+            gender: 0-unknown, 1-male, 2-female,
+            birthday: ms timestamp, maybe a negative number
+            city: may be empty
+        }
+    }
+    """
+    url = "https://music.163.com/api/v1/user/detail/%s" % (
+        user_id
+    )
+    res = requests.get(url, headers=HEADERS).json()
+    return res.get("profile", {})

@@ -1,11 +1,62 @@
 # -*- coding: utf-8 -*-
 """
-@Time    : 2020-10-15 18:21
+@Time    : 2020-10-23 21:02
 @Author  : Lei Xu
 @Email   : lei.xu.job.us@gmail.com
-@File    : artist.py
+@File    : crawler_artist.py
 
 Description:
+song id list:
+65766
+1488563891
+65538
+65533
+28563317
+65536
+551816010
+65800
+65528
+64561
+66282
+35403523
+64634
+65919
+31877628
+64093
+28481103
+64317
+1468192805
+28481818
+64293
+65923
+65761
+27867449
+66285
+1462659723
+64443
+64048
+64126
+65312
+64922
+25730757
+64797
+31426608
+65769
+64833
+65904
+27483204
+66272
+64638
+27483203
+437802725
+64625
+186331
+25638273
+65758
+64803
+66265
+27483202
+65900
 
 Update:
 
@@ -15,13 +66,17 @@ Todo:
 """
 # system import
 import os
+import sys
+import requests
+import time
+import random
 import datetime
+import multiprocessing
 # 3rd import
 from django.core.management.base import BaseCommand, CommandError
 
 # self import
 from core import netease
-from meta.models import Artist, Album, Song, Comment, User
 # module level variables here
 
 # Create your models here.
@@ -36,7 +91,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 
         artist_id = options["artist"][0]
-        artist, songs = netease.get_artist_info(artist_id)
+        artist, songs = get_artist_info(artist_id)
         artist_obj, created = Artist.objects.get_or_create(
             netease_id=artist["id"],
             defaults={"name": artist["name"]}
@@ -55,53 +110,6 @@ headers = {
     # "Cookie": "NMTID=00OmYrUWn7kjnrMiEghv8VtKW-mDz8AAAF0wg82nQ; csrftoken=MfSAeFq1h34wVW5ZZkg5O2mydtQzEPDwK5L8giRb0AxzJ1K9n6pVdfbznJIdWeJg",
     "Referer": "https://music.163.com",
 }
-
-
-def process_song(song, artist_obj):
-    pid = os.getpid()
-    print("processing(%s): " % pid, song["name"], song["id"], artist_obj.name)
-    album = song["al"]
-    album_obj, created = Album.objects.get_or_create(
-        netease_id=album["id"],
-        defaults={
-            "name": album["name"],
-            "artist": artist_obj,
-            "pic": album["picUrl"]
-        }
-    )
-    song_obj, created = Song.objects.get_or_create(
-        netease_id=song["id"],
-        defaults={
-            "name": song["name"],
-            "album": album_obj,
-        }
-    )
-    artists = song["ar"]
-    for artist in artists:
-        artist_obj, created = Artist.objects.get_or_create(
-            netease_id=artist["id"],
-            defaults={"name": artist["name"]}
-        )
-        song_obj.artists.add(artist_obj)
-
-    page = 1
-    saved_users = 0
-    saved_comments = 0
-    processed_comments = 0
-    cursor = -1
-    while True:
-        comments, total, new_cursor = netease.get_comment(song["id"], page, cursor)
-        cursor = new_cursor
-        last_page = int(total / 100) + 1
-        new_users, new_comments, new_processed_comments = save_comments(comments, song_obj)
-        saved_users += new_users
-        saved_comments += new_comments
-        processed_comments += new_processed_comments
-        print("(%s)saved users: %s, comments: %s/%s/%s" % (pid, new_users, new_comments, processed_comments, total))
-        page += 1
-        if page > last_page:
-            print("(%s)total=%s, last_page=%s, page=%s" % (pid, total, last_page, page))
-            break
 
 
 def save_comments(comments, song_obj):
@@ -172,7 +180,7 @@ def save_user(user_id):
         user_obj = User.objects.get(netease_id=user_id)
     except User.DoesNotExist:
         created = True
-        user = netease.get_user_info(user_id)
+        user = get_user_info(user_id)
         ts = user.get("birthday", 0) / 1000
         birthday = datetime.datetime.fromtimestamp(ts) if ts > 0 else None
         user_obj = User.objects.create(
@@ -200,6 +208,8 @@ def save_comment(comment_id, content, user_obj, song_obj):
     return comment_obj, created
 
 
+
+
 def get_song_list(artist_id):
     """
     https://music.163.com/weapi/artist/top/song
@@ -218,3 +228,139 @@ def get_song_list(artist_id):
     }
     res = netease.request(options)
     return res.get("songs", [])
+
+
+def get_comment(song_id, page=1, cursor=-1):
+    """
+    http://music.163.com/api/v1/resource/comments/R_SO_4_{song_id}?limit={limit}&offset={offset}
+    :return:
+    {
+        code: 200,
+        data: {
+            comments: [{
+                beReplied:[{
+                    user: {
+                        userId: xx,
+                        nickname: xx,
+                    }
+                    beRepliedCommentId: xx,
+                    content: xx
+                }],
+                user: {
+                    userId: xx,
+                    nickname: xx,
+                },
+                commentId: xx,
+                content: xxx,
+            }],
+            totalCount: xxx,
+        }
+    }
+    """
+    options = {
+        "url": "https://music.163.com/weapi/comment/resource/comments/get?csrf_token=",
+        "data": {
+            "rid": "R_SO_4_%s" % song_id,
+            "threadId": "R_SO_4_%s" % song_id,
+            # "offset": (page-1)*100,
+            "pageNo": page,
+            "pageSize": 100,
+            "orderType": 2,
+            "cursor": cursor,
+        }
+    }
+    res = netease.request(options)
+    data = res["data"]
+    return data.get("comments", []), data["totalCount"], data["cursor"]
+
+def get_user_info(user_id):
+    """
+    https://music.163.com/api/v1/user/detail/{user_id}
+    :return:
+    {
+        profile: {
+            userId: xx,
+            nickname: xx,
+            gender: 0-unknown, 1-male, 2-female,
+            birthday: ms timestamp, maybe a negative number
+            city: may be empty
+        }
+    }
+    """
+    url = "https://music.163.com/api/v1/user/detail/%s" % (
+        user_id
+    )
+    res = requests.get(url, headers=headers).json()
+    return res.get("profile", {})
+
+
+def process_song(song_id, thread):
+    pid = os.getpid()
+    cmd = "python3 manage.py song %s %s" % (song_id, thread)
+    print("processing(%s-%s): %s" % (thread, pid, cmd))
+    os.system(cmd)
+
+
+if __name__ == "__main__":
+    print("start crawling...")
+    songs =[
+        65766,
+        1488563891,
+        65538,
+        65533,
+        28563317,
+        65536,
+        551816010,
+        65800,
+        65528,
+        64561,
+        66282,
+        35403523,
+        64634,
+        65919,
+        31877628,
+        64093,
+        28481103,
+        64317,
+        1468192805,
+        28481818,
+        64293,
+        65923,
+        65761,
+        27867449,
+        66285,
+        1462659723,
+        64443,
+        64048,
+        64126,
+        65312,
+        64922,
+        25730757,
+        64797,
+        31426608,
+        65769,
+        64833,
+        65904,
+        27483204,
+        66272,
+        64638,
+        27483203,
+        437802725,
+        64625,
+        186331,
+        25638273,
+        65758,
+        64803,
+        66265,
+        27483202,
+        65900,
+    ]
+    pool = multiprocessing.Pool(20)
+    thread = 0
+    for song in songs:
+        pool.apply_async(process_song,args=(song, thread))
+        thread += 1
+    pool.close()
+    pool.join()
+
+    print("all done")

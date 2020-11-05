@@ -25,9 +25,10 @@ class UserAdmin(admin.ModelAdmin):
 
 
 class CommentAdmin(admin.ModelAdmin):
-    fields = ("id", "netease_id", "user", "song", "content", "replies_readonly")
+    fields = ("id", "netease_id", "user", "song", "content",)
     list_display = ("id", "user", "song", "content", "replies")
-    readonly_fields = ("id", "replies_readonly",)
+    exclude = ("replied",)
+    readonly_fields = ("id", )
 
     def replies_readonly(self, instance):
         return instance.replies_link()

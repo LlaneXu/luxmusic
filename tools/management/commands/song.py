@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-@Time    : 2020-10-15 18:21
+@Time    : 2020-10-23 21:48
 @Author  : Lei Xu
 @Email   : lei.xu.job.us@gmail.com
-@File    : artist.py
+@File    : song.py
 
 Description:
 
@@ -20,88 +20,62 @@ import datetime
 from django.core.management.base import BaseCommand, CommandError
 
 # self import
+from meta.models import Song, Comment, User
 from core import netease
-from meta.models import Artist, Album, Song, Comment, User
+from tools.models import Crawler
 # module level variables here
 
 # Create your models here.
 
 
 class Command(BaseCommand):
-    help = "get all the comments of an artist's all songs"
+    help = "get all the comments of a song"
 
     def add_arguments(self, parser):
-        parser.add_argument('artist', nargs=1, help="the id of an artist")
+        parser.add_argument('song', nargs=1, help="the id of the song")
+        parser.add_argument('thread', nargs=1, help="thread index")
 
     def handle(self, *args, **options):
+        song_id = options["song"][0]
+        thread = options["thread"][0]
+        pid = os.getpid()
+        song_obj = Song.objects.get(netease_id=song_id)
+        print("(%s-%s): start crawling %s-%s" % (thread, pid, song_id, song_obj.name))
+        crawler, created = Crawler.objects.get_or_create(netease_id=song_id, defaults={"page": 1,"cursor": -1})
 
-        artist_id = options["artist"][0]
-        artist, songs = netease.get_artist_info(artist_id)
-        artist_obj, created = Artist.objects.get_or_create(
-            netease_id=artist["id"],
-            defaults={"name": artist["name"]}
-        )
-        for song in songs:
-            process_song(song, artist_obj)
-        print("all done")
-
-
-headers = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) "
-                  "AppleWebKit/537.36 (KHTML, like Gecko) "
-                  "Chrome/80.0.3987.122 Safari/537.36",
-    "Content-Type": "application/x-www-form-urlencoded",
-    "x-real-ip": "211.161.244.70",
-    # "Cookie": "NMTID=00OmYrUWn7kjnrMiEghv8VtKW-mDz8AAAF0wg82nQ; csrftoken=MfSAeFq1h34wVW5ZZkg5O2mydtQzEPDwK5L8giRb0AxzJ1K9n6pVdfbznJIdWeJg",
-    "Referer": "https://music.163.com",
-}
-
-
-def process_song(song, artist_obj):
-    pid = os.getpid()
-    print("processing(%s): " % pid, song["name"], song["id"], artist_obj.name)
-    album = song["al"]
-    album_obj, created = Album.objects.get_or_create(
-        netease_id=album["id"],
-        defaults={
-            "name": album["name"],
-            "artist": artist_obj,
-            "pic": album["picUrl"]
-        }
-    )
-    song_obj, created = Song.objects.get_or_create(
-        netease_id=song["id"],
-        defaults={
-            "name": song["name"],
-            "album": album_obj,
-        }
-    )
-    artists = song["ar"]
-    for artist in artists:
-        artist_obj, created = Artist.objects.get_or_create(
-            netease_id=artist["id"],
-            defaults={"name": artist["name"]}
-        )
-        song_obj.artists.add(artist_obj)
-
-    page = 1
-    saved_users = 0
-    saved_comments = 0
-    processed_comments = 0
-    cursor = -1
-    while True:
-        comments, total, new_cursor = netease.get_comment(song["id"], page, cursor)
-        cursor = new_cursor
-        last_page = int(total / 100) + 1
-        new_users, new_comments, new_processed_comments = save_comments(comments, song_obj)
-        saved_users += new_users
-        saved_comments += new_comments
-        processed_comments += new_processed_comments
-        print("(%s)saved users: %s, comments: %s/%s/%s" % (pid, new_users, new_comments, processed_comments, total))
-        page += 1
-        if page > last_page:
-            print("(%s)total=%s, last_page=%s, page=%s" % (pid, total, last_page, page))
-            break
+        page = crawler.page
+        cursor = crawler.cursor
+        if not created:
+            print("Found crawler record! start from page=%s, cursor=%s" % (page, cursor))
+        saved_users = 0
+        saved_comments = 0
+        processed_comments = (page-1)*100
+        while True:
+            crawler.page = page
+            crawler.cursor = cursor
+            crawler.save()
+            comments, total, new_cursor = netease.get_comment(song_id, page, cursor)
+            cursor = new_cursor
+            last_page = int(total / 100) + 1
+            new_users, new_comments, new_processed_comments = save_comments(comments, song_obj)
+            saved_users += new_users
+            saved_comments += new_comments
+            processed_comments += new_processed_comments
+            print("(%s-%s): saved users: %s, comments: %s/%s/%s (%.2f%%) (%s-%s)" % (
+                thread,
+                pid,
+                new_users,
+                new_comments,
+                processed_comments,
+                total,
+                processed_comments/total * 100,
+                song_id,
+                song_obj.name,
+            ))
+            page += 1
+            if page > last_page:
+                print("(%s-%s): total=%s, last_page=%s, page=%s" % (thread, pid, total, last_page, page))
+                break
 
 
 def save_comments(comments, song_obj):
@@ -157,7 +131,8 @@ def save_comments(comments, song_obj):
                         re_user_obj,
                         song_obj
                     )
-                    comment_obj.replied.add(re_comment_obj)
+                    if re_comment_obj not in comment_obj.replied.all():
+                        comment_obj.replied.add(re_comment_obj)
                     if created:
                         comment_saved += 1
         except Exception:
@@ -199,22 +174,3 @@ def save_comment(comment_id, content, user_obj, song_obj):
         )
     return comment_obj, created
 
-
-def get_song_list(artist_id):
-    """
-    https://music.163.com/weapi/artist/top/song
-    post
-    encrypted request
-    data:
-    {id: xxx}
-    :return:
-    """
-    options = {
-        "url": "https://music.163.com/weapi/artist/top/song",
-        "data": {
-            "id": artist_id,
-            # "csrf_token": ""
-        }
-    }
-    res = netease.request(options)
-    return res.get("songs", [])

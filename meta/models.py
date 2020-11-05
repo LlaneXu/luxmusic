@@ -82,7 +82,7 @@ class Song(ModelWithName):
 
 
 class User(ModelWithName):
-    netease_id = models.BigIntegerField(null=True, blank=True)
+    netease_id = models.BigIntegerField(null=True, blank=True, db_index=True)
     city = models.CharField(max_length=16, blank=True, null=True)
     gender = models.CharField(max_length=1, choices=(('0', 'Unknown'), ('1', "male"), ("2", "female")))
     birthday = models.DateField(null=True, blank=True)
@@ -92,7 +92,7 @@ class User(ModelWithName):
 
 
 class Comment(models.Model):
-    netease_id = models.BigIntegerField(null=True, blank=True)
+    netease_id = models.BigIntegerField(null=True, blank=True, db_index=True)
     replied = models.ManyToManyField("self", blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     song = models.ForeignKey(Song, on_delete=models.CASCADE)
