@@ -19,7 +19,7 @@ import collections
 # 3rd import
 from django.core.management.base import BaseCommand, CommandError
 import pyecharts.options as opts
-from pyecharts.charts import WordCloud, Bar
+from pyecharts.charts import WordCloud, Bar, Pie
 # self import
 from meta.models import Comment, User
 from tools.models import AnalyzeComment, Progress
@@ -38,7 +38,7 @@ class Command(BaseCommand):
         if options["target"] == "comment":
             self.show_comment()
         else:
-            pass
+            self.show_user()
 
     def show_comment(self):
         alls = AnalyzeComment.objects.all().order_by('-counts')
@@ -68,3 +68,24 @@ class Command(BaseCommand):
                     )
                     .render(file)
                 )
+
+    def show_user(self):
+        # self.gender()
+        self.age()
+
+    def gender(self):
+        all = User.objects.count()
+        males = User.objects.filter(gender=1).count()
+        females = User.objects.filter(gender=2).count()
+        unknown = all - males - females
+        c = (
+            Pie()
+                .add("", [("male",males), ("female",females), ("unknown",unknown)])
+                .set_colors(["blue", "red", "orange"])
+                .set_global_opts(title_opts=opts.TitleOpts(title="Gender"))
+                .set_series_opts(label_opts=opts.LabelOpts(formatter="{b}: {c}({d}%)"))
+                .render("analysis/gender.html")
+        )
+
+    def age(self):
+        pass
