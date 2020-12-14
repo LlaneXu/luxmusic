@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Awesome-pyecharts</title>
+            <script type="text/javascript" src="https://assets.pyecharts.org/assets/echarts.min.js"></script>
+
+</head>
+<body>
+    <div id="525ea5cd8d8d420ead0c6baa15259d02" class="chart-container" style="width:900px; height:500px;"></div>
+    <script>
+        var chart_525ea5cd8d8d420ead0c6baa15259d02 = echarts.init(
+            document.getElementById('525ea5cd8d8d420ead0c6baa15259d02'), 'white', {renderer: 'canvas'});
+        var option_525ea5cd8d8d420ead0c6baa15259d02 = {
+    "animation": true,
+    "animationThreshold": 2000,
+    "animationDuration": 1000,
+    "animationEasing": "cubicOut",
+    "animationDelay": 0,
+    "animationDurationUpdate": 300,
+    "animationEasingUpdate": "cubicOut",
+    "animationDelayUpdate": 0,
+    "color": [
+        "blue",
+        "red",
+        "orange"
+    ],
+    "series": [
+        {
+            "type": "pie",
+            "clockwise": true,
+            "data": [
+                {
+                    "name": "male",
+                    "value": 635958
+                },
+                {
+                    "name": "female",
+                    "value": 608492
+                },
+                {
+                    "name": "unknown",
+                    "value": 172098
+                }
+            ],
+            "radius": [
+                "0%",
+                "75%"
+            ],
+            "center": [
+                "50%",
+                "50%"
+            ],
+            "label": {
+                "show": true,
+                "position": "top",
+                "margin": 8,
+                "formatter": "{b}: {c}({d}%)"
+            },
+            "rippleEffect": {
+                "show": true,
+                "brushType": "stroke",
+                "scale": 2.5,
+                "period": 4
+            }
+        }
+    ],
+    "legend": [
+        {
+            "data": [
+                "male",
+                "female",
+                "unknown"
+            ],
+            "selected": {},
+            "show": true,
+            "padding": 5,
+            "itemGap": 10,
+            "itemWidth": 25,
+            "itemHeight": 14
+        }
+    ],
+    "tooltip": {
+        "show": true,
+        "trigger": "item",
+        "triggerOn": "mousemove|click",
+        "axisPointer": {
+            "type": "line"
+        },
+        "showContent": true,
+        "alwaysShowContent": false,
+        "showDelay": 0,
+        "hideDelay": 100,
+        "textStyle": {
+            "fontSize": 14
+        },
+        "borderWidth": 0,
+        "padding": 5
+    },
+    "title": [
+        {
+            "text": "Gender",
+            "padding": 5,
+            "itemGap": 10
+        }
+    ]
+};
+        chart_525ea5cd8d8d420ead0c6baa15259d02.setOption(option_525ea5cd8d8d420ead0c6baa15259d02);
+    </script>
+</body>
+</html>

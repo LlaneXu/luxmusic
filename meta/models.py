@@ -86,6 +86,8 @@ class User(ModelWithName):
     city = models.CharField(max_length=16, blank=True, null=True)
     gender = models.CharField(max_length=1, choices=(('0', 'Unknown'), ('1', "male"), ("2", "female")))
     birthday = models.DateField(null=True, blank=True)
+    age = models.IntegerField(null=True, blank=True)
+    province = models.CharField(max_length=2, blank=True, null=True)
 
     def __str__(self):
         return "%s" % (self.name)

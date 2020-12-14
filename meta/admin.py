@@ -20,7 +20,7 @@ class SongAdmin(admin.ModelAdmin):
 
 
 class UserAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "city", "birthday")
+    list_display = ("id", "name", "city", "birthday", "age")
     readonly_fields = ("id",)
 
 
