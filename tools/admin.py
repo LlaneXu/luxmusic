@@ -6,7 +6,7 @@ class CrawlerAdmin(admin.ModelAdmin):
     readonly_fields = ("id",)
 
 class AnalyzeCommentAdmin(admin.ModelAdmin):
-    list_display = ("id", "word", "tag", "counts")
+    list_display = ("id", "word", "word_en", "tag", "counts")
     readonly_fields = ("id",)
 
 class ProgressAdmin(admin.ModelAdmin):
